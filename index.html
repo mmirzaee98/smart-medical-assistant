@@ -6,6 +6,7 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
     h1 { color: #2c5f8a; }
+    h2 { color: #2c5f8a; margin-top: 30px; font-size: 20px; }
     input, textarea { width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; margin-top: 8px; }
     textarea { height: 100px; }
     button { margin-top: 10px; padding: 10px 20px; font-size: 16px; background: #2c5f8a; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 8px; }
@@ -13,6 +14,10 @@
     #result { margin-top: 20px; padding: 15px; background: #f4f4f4; border-radius: 5px; white-space: pre-wrap; min-height: 40px; }
     .disclaimer { margin-top: 20px; font-size: 13px; color: #888; }
     #authMessage { margin-top: 10px; color: #c0392b; }
+    .history-item { border: 1px solid #ddd; border-radius: 5px; padding: 12px; margin-top: 12px; }
+    .history-date { font-size: 12px; color: #888; }
+    .history-symptoms { margin-top: 4px; }
+    .history-response { margin-top: 6px; white-space: pre-wrap; color: #333; }
   </style>
 </head>
 <body>
@@ -35,6 +40,9 @@
     <textarea id="symptoms" placeholder="e.g. I have a headache and a sore throat..."></textarea>
     <button id="askBtn" onclick="askAssistant()">Ask</button>
     <div id="result"></div>
+
+    <h2>Your Past Checks</h2>
+    <div id="history">Loading...</div>
   </div>
 
   <p class="disclaimer">This tool provides general information only and is not a substitute for professional medical advice.</p>
@@ -50,6 +58,7 @@
         document.getElementById("authArea").style.display = "none";
         document.getElementById("appArea").style.display = "block";
         document.getElementById("userEmail").textContent = session.user.email;
+        loadHistory();
       } else {
         document.getElementById("authArea").style.display = "block";
         document.getElementById("appArea").style.display = "none";
@@ -93,13 +102,39 @@
         });
         const data = await response.json();
         resultDiv.textContent = data.response;
-        // Save this symptom check to the database
-        await sb.from("symptom_checks").insert({ symptoms: symptoms, response: data.response });
+
+        const { error } = await sb.from("symptom_checks").insert({
+          symptoms: symptoms,
+          response: data.response
+        });
+        if (error) console.error("Could not save:", error.message);
+        else loadHistory();
+
       } catch (error) {
         resultDiv.textContent = "Error: could not reach the assistant. " + error;
       } finally {
         button.disabled = false;
       }
+    }
+
+    async function loadHistory() {
+      const historyDiv = document.getElementById("history");
+      const { data, error } = await sb.from("symptom_checks")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) { historyDiv.textContent = "Could not load history."; return; }
+      if (!data || data.length === 0) { historyDiv.textContent = "No past checks yet."; return; }
+      historyDiv.innerHTML = data.map(c => `
+        <div class="history-item">
+          <div class="history-date">${new Date(c.created_at).toLocaleString()}</div>
+          <div class="history-symptoms"><strong>You asked:</strong> ${escapeHtml(c.symptoms)}</div>
+          <div class="history-response">${escapeHtml(c.response)}</div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(s) {
+      return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
   </script>
 </body>

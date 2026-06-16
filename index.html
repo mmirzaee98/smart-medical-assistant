@@ -2,66 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Medical Assistant</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
-    h1 { color: #2c5f8a; }
-    h2 { color: #2c5f8a; margin-top: 30px; font-size: 20px; }
-    input, textarea { width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; margin-top: 8px; }
-    textarea { height: 100px; }
-    button { margin-top: 10px; padding: 10px 20px; font-size: 16px; background: #2c5f8a; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 8px; }
-    button:disabled { background: #999; }
-    #result { margin-top: 20px; padding: 15px; background: #f4f4f4; border-radius: 5px; white-space: pre-wrap; min-height: 40px; }
-    .disclaimer { margin-top: 20px; font-size: 13px; color: #888; }
-    #authMessage { margin-top: 10px; color: #c0392b; }
-    .history-item { border: 1px solid #ddd; border-radius: 5px; padding: 12px; margin-top: 12px; }
-    .history-date { font-size: 12px; color: #888; }
-    .history-symptoms { margin-top: 4px; }
-    .history-response { margin-top: 6px; white-space: pre-wrap; color: #333; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: #f0f4f8; color: #1a2b3c; margin: 0; padding: 24px 16px; line-height: 1.5; }
+    .container { max-width: 640px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; }
+    header h1 { margin: 0; color: #0d6e6e; font-size: 26px; }
+    header p { margin: 4px 0 0; color: #5a6b7b; }
+    .disclaimer { background: #fff7e6; border: 1px solid #ffd591; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #875a00; margin-bottom: 20px; }
+    label { font-weight: 600; font-size: 14px; }
+    input, textarea { width: 100%; padding: 11px; font-size: 15px; border: 1px solid #cdd7e1; border-radius: 8px; margin-top: 6px; font-family: inherit; }
+    textarea { height: 90px; resize: vertical; }
+    input:focus, textarea:focus { outline: none; border-color: #0d6e6e; }
+    button { padding: 11px 20px; font-size: 15px; font-weight: 600; background: #0d6e6e; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 12px; }
+    button:hover { background: #0a5757; }
+    button:disabled { background: #9bb0b0; cursor: not-allowed; }
+    .secondary { background: #e2e8f0; color: #334155; }
+    .secondary:hover { background: #cbd5e1; }
+    .result { margin-top: 16px; padding: 14px; border-radius: 8px; background: #f0f7f7; border-left: 4px solid #0d6e6e; white-space: pre-wrap; min-height: 24px; }
+    .result.error { background: #fff1f0; border-left-color: #cf1322; color: #a8071a; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #cdd7e1; border-top-color: #0d6e6e; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .user-bar { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #5a6b7b; margin-bottom: 16px; }
+    .history-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 12px; }
+    .history-date { font-size: 12px; color: #94a3b8; }
+    .history-symptoms { margin-top: 4px; font-weight: 600; }
+    .history-response { margin-top: 6px; white-space: pre-wrap; color: #334155; font-size: 14px; }
+    #authMessage { margin-top: 10px; font-size: 14px; }
+    #authMessage.error { color: #cf1322; }
+    #authMessage.success { color: #389e0d; }
+    .muted { color: #94a3b8; }
+    h2 { margin-top: 0; color: #0d6e6e; font-size: 18px; }
   </style>
 </head>
 <body>
-  <h1>Smart Medical Assistant</h1>
+  <div class="container">
+    <header>
+      <h1>🩺 Smart Medical Assistant</h1>
+      <p>Describe your symptoms for general health information.</p>
+    </header>
 
-  <div id="authArea">
-    <p>Log in or sign up to use the assistant.</p>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password (at least 6 characters)">
-    <div>
-      <button onclick="signUp()">Sign Up</button>
-      <button onclick="logIn()">Log In</button>
+    <div class="disclaimer">
+      ⚠️ <strong>Not medical advice.</strong> This tool gives general information only and is not a substitute for a doctor. For emergencies, call 911 (or your local emergency number).
     </div>
-    <div id="authMessage"></div>
+
+    <div class="card" id="authArea">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="At least 6 characters">
+      <div>
+        <button onclick="logIn()">Log In</button>
+        <button class="secondary" onclick="signUp()">Sign Up</button>
+      </div>
+      <div id="authMessage"></div>
+    </div>
+
+    <div class="card" id="appArea" style="display:none;">
+      <div class="user-bar">
+        <span>Logged in as <strong id="userEmail"></strong></span>
+        <button class="secondary" style="margin-top:0; padding:6px 12px;" onclick="logOut()">Log out</button>
+      </div>
+      <label for="symptoms">Your symptoms</label>
+      <textarea id="symptoms" placeholder="e.g. I have a headache and a sore throat..."></textarea>
+      <button id="askBtn" onclick="askAssistant()">Ask</button>
+      <div class="result" id="result"><span class="muted">Your answer will appear here.</span></div>
+    </div>
+
+    <div class="card" id="historyCard" style="display:none;">
+      <h2>Your Past Checks</h2>
+      <div id="history" class="muted">Loading...</div>
+    </div>
   </div>
 
-  <div id="appArea" style="display:none;">
-    <p>Logged in as <span id="userEmail"></span> &nbsp; <button onclick="logOut()">Log out</button></p>
-    <p>Describe your symptoms to get general information.</p>
-    <textarea id="symptoms" placeholder="e.g. I have a headache and a sore throat..."></textarea>
-    <button id="askBtn" onclick="askAssistant()">Ask</button>
-    <div id="result"></div>
-
-    <h2>Your Past Checks</h2>
-    <div id="history">Loading...</div>
-  </div>
-
-  <p class="disclaimer">This tool provides general information only and is not a substitute for professional medical advice.</p>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
     const SUPABASE_URL = "https://tankfsemlvdwkabpbvky.supabase.co";
     const SUPABASE_KEY = "sb_publishable_DQInWzZjDEI4V2Jk3IhRHQ_khWdCX2c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     function updateUI(session) {
-      if (session) {
-        document.getElementById("authArea").style.display = "none";
-        document.getElementById("appArea").style.display = "block";
+      const loggedIn = !!session;
+      document.getElementById("authArea").style.display = loggedIn ? "none" : "block";
+      document.getElementById("appArea").style.display = loggedIn ? "block" : "none";
+      document.getElementById("historyCard").style.display = loggedIn ? "block" : "none";
+      if (loggedIn) {
         document.getElementById("userEmail").textContent = session.user.email;
         loadHistory();
-      } else {
-        document.getElementById("authArea").style.display = "block";
-        document.getElementById("appArea").style.display = "none";
       }
     }
     sb.auth.onAuthStateChange((event, session) => updateUI(session));
@@ -71,47 +100,48 @@
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const msg = document.getElementById("authMessage");
+      if (!email || password.length < 6) {
+        msg.className = "error"; msg.textContent = "Enter an email and a password of at least 6 characters."; return;
+      }
       const { error } = await sb.auth.signUp({ email, password });
-      msg.textContent = error ? "Error: " + error.message : "Signed up! Logging you in...";
+      if (error) { msg.className = "error"; msg.textContent = error.message; }
+      else { msg.className = "success"; msg.textContent = "Signed up! Logging you in..."; }
     }
 
     async function logIn() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const msg = document.getElementById("authMessage");
+      if (!email || !password) { msg.className = "error"; msg.textContent = "Please enter your email and password."; return; }
       const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) msg.textContent = "Error: " + error.message;
+      if (error) { msg.className = "error"; msg.textContent = error.message; }
     }
 
-    async function logOut() {
-      await sb.auth.signOut();
-    }
+    async function logOut() { await sb.auth.signOut(); }
 
     async function askAssistant() {
-      const symptoms = document.getElementById("symptoms").value;
+      const symptoms = document.getElementById("symptoms").value.trim();
       const resultDiv = document.getElementById("result");
       const button = document.getElementById("askBtn");
-      if (!symptoms.trim()) { resultDiv.textContent = "Please enter your symptoms first."; return; }
+      resultDiv.className = "result";
+      if (!symptoms) { resultDiv.textContent = "Please describe your symptoms first."; return; }
       button.disabled = true;
-      resultDiv.textContent = "Thinking... (this can take up to a minute)";
+      resultDiv.innerHTML = '<span class="spinner"></span>Thinking... (this can take up to a minute)';
       try {
         const response = await fetch("http://localhost:8000/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: symptoms })
         });
+        if (!response.ok) throw new Error("Server error " + response.status);
         const data = await response.json();
         resultDiv.textContent = data.response;
-
-        const { error } = await sb.from("symptom_checks").insert({
-          symptoms: symptoms,
-          response: data.response
-        });
+        const { error } = await sb.from("symptom_checks").insert({ symptoms, response: data.response });
         if (error) console.error("Could not save:", error.message);
         else loadHistory();
-
-      } catch (error) {
-        resultDiv.textContent = "Error: could not reach the assistant. " + error;
+      } catch (err) {
+        resultDiv.className = "result error";
+        resultDiv.textContent = "⚠️ Couldn't reach the assistant. Make sure the backend is running, then try again.";
       } finally {
         button.disabled = false;
       }
@@ -119,22 +149,19 @@
 
     async function loadHistory() {
       const historyDiv = document.getElementById("history");
-      const { data, error } = await sb.from("symptom_checks")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await sb.from("symptom_checks").select("*").order("created_at", { ascending: false });
       if (error) { historyDiv.textContent = "Could not load history."; return; }
       if (!data || data.length === 0) { historyDiv.textContent = "No past checks yet."; return; }
       historyDiv.innerHTML = data.map(c => `
         <div class="history-item">
           <div class="history-date">${new Date(c.created_at).toLocaleString()}</div>
-          <div class="history-symptoms"><strong>You asked:</strong> ${escapeHtml(c.symptoms)}</div>
+          <div class="history-symptoms">${escapeHtml(c.symptoms)}</div>
           <div class="history-response">${escapeHtml(c.response)}</div>
-        </div>
-      `).join("");
+        </div>`).join("");
     }
 
     function escapeHtml(s) {
-      return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
   </script>
 </body>
